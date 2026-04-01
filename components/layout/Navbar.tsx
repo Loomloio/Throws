@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { useUserStore } from "@/stores/userStore";
 import { useAuthActions } from "@/lib/auth/auth-context";
 import { Button } from "@/components/ui/button";
@@ -34,9 +35,9 @@ function BalanceDisplay() {
   const userId = useUserStore((s) => s.userId);
   if (!userId) return null;
   return (
-    <div className="flex items-center gap-2 bg-secondary rounded-lg px-3 py-1.5">
+    <div className="flex items-center gap-1.5 bg-secondary/80 rounded-lg px-3 py-1.5 border border-border">
       <span className="text-muted-foreground text-sm">$</span>
-      <span className="font-mono font-semibold text-sm tabular-nums">
+      <span className="font-mono font-bold text-sm tabular-nums text-foreground">
         {balance.toFixed(2)}
       </span>
     </div>
@@ -46,6 +47,7 @@ function BalanceDisplay() {
 function UserMenu() {
   const { userId, username } = useUserStore();
   const { login, logout } = useAuthActions();
+  const router = useRouter();
 
   if (!userId) {
     return (
@@ -71,19 +73,19 @@ function UserMenu() {
       <DropdownMenuContent align="end" className="w-48">
         <DropdownMenuItem
           className="cursor-pointer"
-          onClick={() => (window.location.href = "/profile")}
+          onClick={() => router.push("/profile")}
         >
           profile
         </DropdownMenuItem>
         <DropdownMenuItem
           className="cursor-pointer"
-          onClick={() => (window.location.href = "/wallet")}
+          onClick={() => router.push("/wallet")}
         >
           wallet
         </DropdownMenuItem>
         <DropdownMenuItem
           className="cursor-pointer"
-          onClick={() => (window.location.href = "/history")}
+          onClick={() => router.push("/history")}
         >
           bet history
         </DropdownMenuItem>
@@ -112,8 +114,7 @@ export function Navbar() {
             <Link href="/wallet">
               <Button
                 size="sm"
-                variant="outline"
-                className="border-green text-green hover:bg-green/10 text-xs"
+                className="bg-green/15 text-green border border-green/30 hover:bg-green/25 text-xs font-bold"
               >
                 + deposit
               </Button>

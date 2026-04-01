@@ -66,7 +66,7 @@ export function ChatFeed({ messages, onSend, userId, className }: ChatFeedProps)
         {messages.map((msg) => (
           <div key={msg.id} className="group">
             {msg.isSystem ? (
-              <div className="text-[11px] text-gold/80 bg-gold/5 rounded px-2 py-1 border-l-2 border-gold/30">
+              <div className="text-[11px] text-gold/70 bg-gold/5 rounded px-2 py-1 border-l-2 border-gold/20">
                 {msg.message}
               </div>
             ) : (

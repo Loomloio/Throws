@@ -368,7 +368,7 @@ export default function ArenaPage() {
       {/* Main game area */}
       <div className="flex-1 flex flex-col overflow-y-auto">
         {/* Battle arena — during countdown/battle: flex-1 + center. During betting: just top. */}
-        <div className="flex flex-col flex-1 justify-center px-3 sm:px-4 pt-1 sm:pt-2">
+        <div className="flex flex-col flex-1 justify-center px-3 sm:px-6 pt-2 sm:pt-4">
           <BattleArena
             phase={phase}
             timeRemaining={timeRemaining}
@@ -422,7 +422,7 @@ export default function ArenaPage() {
             opacity: (phase === "countdown" || phase === "battle") ? 0 : 1,
           }}
           transition={{ duration: 0.3 }}
-          className="overflow-hidden sm:!h-auto sm:!opacity-100 px-3 sm:px-4 pb-14 sm:pb-2 space-y-1"
+          className="overflow-hidden sm:!h-auto sm:!opacity-100 px-3 sm:px-6 pb-16 sm:pb-4 space-y-2"
         >
           {/* Quick re-bet */}
           {phase === "betting" && lastBetsRef.current.length > 0 && activeBetDisplays.length === 0 && userId && (

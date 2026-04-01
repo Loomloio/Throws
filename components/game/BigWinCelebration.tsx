@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
 type WinTier = "none" | "small" | "medium" | "big";
@@ -10,6 +10,35 @@ function getWinTier(amount: number): WinTier {
   if (amount >= 100) return "medium";
   if (amount >= 50) return "small";
   return "none";
+}
+
+function ConfettiLayer({ count }: { count: number }) {
+  const particles = useMemo(
+    () =>
+      Array.from({ length: count }).map((_, i) => ({
+        id: i,
+        x: `${Math.random() * 100}vw`,
+        rotate: Math.random() * 720 - 360,
+        duration: 2 + Math.random() * 2,
+        delay: Math.random() * 0.5,
+        color: i % 3 === 0 ? "bg-violet" : i % 3 === 1 ? "bg-magenta" : "bg-gold",
+      })),
+    [count]
+  );
+
+  return (
+    <div className="fixed inset-0 z-[100] pointer-events-none overflow-hidden">
+      {particles.map((p) => (
+        <motion.div
+          key={p.id}
+          className={`absolute w-2 h-2 rounded-full ${p.color}`}
+          initial={{ x: p.x, y: -20, rotate: 0, opacity: 1 }}
+          animate={{ y: "110vh", rotate: p.rotate, opacity: 0 }}
+          transition={{ duration: p.duration, delay: p.delay, ease: "easeIn" }}
+        />
+      ))}
+    </div>
+  );
 }
 
 interface BigWinCelebrationProps {
@@ -48,36 +77,7 @@ export function BigWinCelebration({
         <>
           {/* Confetti particles */}
           {(tier === "medium" || tier === "big") && (
-            <div className="fixed inset-0 z-[100] pointer-events-none overflow-hidden">
-              {Array.from({ length: tier === "big" ? 50 : 20 }).map((_, i) => (
-                <motion.div
-                  key={i}
-                  className={`absolute w-2 h-2 rounded-full ${
-                    i % 3 === 0
-                      ? "bg-violet"
-                      : i % 3 === 1
-                        ? "bg-magenta"
-                        : "bg-gold"
-                  }`}
-                  initial={{
-                    x: `${Math.random() * 100}vw`,
-                    y: -20,
-                    rotate: 0,
-                    opacity: 1,
-                  }}
-                  animate={{
-                    y: "110vh",
-                    rotate: Math.random() * 720 - 360,
-                    opacity: 0,
-                  }}
-                  transition={{
-                    duration: 2 + Math.random() * 2,
-                    delay: Math.random() * 0.5,
-                    ease: "easeIn",
-                  }}
-                />
-              ))}
-            </div>
+            <ConfettiLayer count={tier === "big" ? 40 : 16} />
           )}
 
           {/* Big win overlay */}

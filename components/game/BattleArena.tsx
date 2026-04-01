@@ -96,13 +96,15 @@ function CountdownDisplay({ time, phase }: { time: number; phase: RoundPhase }) 
       </motion.div>
     );
   }
-  // Betting — colour shifts as time runs out
+  // Betting — colour shifts as time runs out. Timer is THE most prominent element.
   const urgency = time <= 5 ? "critical" : time <= 10 ? "warning" : "normal";
   return (
-    <motion.div className={cn("font-mono font-black tabular-nums text-3xl sm:text-4xl",
-        urgency === "normal" && "text-cyan", urgency === "warning" && "text-gold", urgency === "critical" && "text-red")}
-      animate={urgency === "critical" ? { scale: [1, 1.15, 1] } : urgency === "warning" ? { scale: [1, 1.05, 1] } : {}}
-      transition={urgency !== "normal" ? { duration: 0.5, repeat: Infinity } : {}}>
+    <motion.div className={cn("font-mono font-black tabular-nums text-4xl sm:text-5xl",
+        urgency === "normal" && "text-foreground/80",
+        urgency === "warning" && "text-gold drop-shadow-[0_0_10px_rgba(245,158,11,0.3)]",
+        urgency === "critical" && "text-red drop-shadow-[0_0_15px_rgba(239,68,68,0.4)]")}
+      animate={urgency === "critical" ? { scale: [1, 1.1, 1] } : {}}
+      transition={urgency === "critical" ? { duration: 0.5, repeat: Infinity } : {}}>
       0:{String(time).padStart(2, "0")}
     </motion.div>
   );
@@ -123,19 +125,20 @@ function CharacterOrb({ player, phase, move, isWinner, isLoser, isDraw, timeRema
   const urgency = isBetting && timeRemaining <= 5 ? "critical" : isBetting && timeRemaining <= 10 ? "warning" : "normal";
 
   const c = player === "violet"
-    ? { border: "border-violet", bg: "bg-violet/10", bgWin: "bg-violet/25",
-        glow: "shadow-[0_0_30px_rgba(139,92,246,0.3)]", glowMd: "shadow-[0_0_50px_rgba(139,92,246,0.5)]",
-        glowLg: "shadow-[0_0_80px_rgba(139,92,246,0.7)]", glowWin: "shadow-[0_0_100px_rgba(139,92,246,0.8)]",
+    ? { border: "border-violet", bg: "bg-violet/5", bgActive: "bg-violet/10", bgWin: "bg-violet/25",
+        glowIdle: "shadow-none", glowActive: "shadow-[0_0_40px_rgba(139,92,246,0.4)]",
+        glowBattle: "shadow-[0_0_60px_rgba(139,92,246,0.6)]", glowWin: "shadow-[0_0_80px_rgba(139,92,246,0.7)]",
         text: "text-violet" }
-    : { border: "border-magenta", bg: "bg-magenta/10", bgWin: "bg-magenta/25",
-        glow: "shadow-[0_0_30px_rgba(236,72,153,0.3)]", glowMd: "shadow-[0_0_50px_rgba(236,72,153,0.5)]",
-        glowLg: "shadow-[0_0_80px_rgba(236,72,153,0.7)]", glowWin: "shadow-[0_0_100px_rgba(236,72,153,0.8)]",
+    : { border: "border-magenta", bg: "bg-magenta/5", bgActive: "bg-magenta/10", bgWin: "bg-magenta/25",
+        glowIdle: "shadow-none", glowActive: "shadow-[0_0_40px_rgba(236,72,153,0.4)]",
+        glowBattle: "shadow-[0_0_60px_rgba(236,72,153,0.6)]", glowWin: "shadow-[0_0_80px_rgba(236,72,153,0.7)]",
         text: "text-magenta" };
 
-  const orbGlow = isWinner ? c.glowWin : (isCountdown || isBattle) ? c.glowLg
-    : urgency === "critical" ? c.glowLg : urgency === "warning" ? c.glowMd : c.glow;
-  const orbBg = isWinner ? c.bgWin : c.bg;
-  const orbBorder = isWinner ? "border-4" : "border-2";
+  // "Calm when you bet. Electric when they throw." — glow only during active moments
+  const orbGlow = isWinner ? c.glowWin : isBattle ? c.glowBattle
+    : isCountdown ? c.glowActive : c.glowIdle;
+  const orbBg = isWinner ? c.bgWin : (isCountdown || isBattle) ? c.bgActive : c.bg;
+  const orbBorder = isWinner ? "border-4" : (isCountdown || isBattle) ? "border-2" : "border";
 
   const orbSize = isCentered
     ? "w-32 h-32 sm:w-44 sm:h-44"
@@ -258,7 +261,7 @@ export function BattleArena({ phase, timeRemaining, violetMove, magentaMove, res
     <motion.div
       className={cn(
         "flex flex-col items-center transition-all duration-300",
-        isCentered ? "gap-2 sm:gap-4" : "gap-1 sm:gap-2"
+        isCentered ? "gap-3 sm:gap-5 py-2" : "gap-2 sm:gap-3 py-1"
       )}
       layout
     >
@@ -296,8 +299,10 @@ export function BattleArena({ phase, timeRemaining, violetMove, magentaMove, res
               <ResultBanner key="result" result={showResult} violetMove={showVioletMove} magentaMove={showMagentaMove} />
             ) : (
               <motion.span key="vs"
-                className={cn("text-base sm:text-xl font-black",
-                  phase === "countdown" ? "text-red/60" : phase === "battle" ? "text-gold/60" : "text-muted-foreground/40")}>
+                className={cn("font-black",
+                  phase === "countdown" ? "text-base sm:text-lg text-red/50" :
+                  phase === "battle" ? "text-lg sm:text-xl text-gold/70" :
+                  "text-sm sm:text-base text-muted-foreground/30")}>
                 {phase === "battle" ? "⚡" : "vs"}
               </motion.span>
             )}

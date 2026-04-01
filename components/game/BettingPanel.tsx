@@ -78,9 +78,9 @@ export function BettingPanel({
     if (isDraw && spot.category === "player") return "bg-cyan/10 border-cyan/30";
     if (isLoser) return "bg-secondary/20 border-border opacity-35";
     if (hasChips && !betsLocked) {
-      if (spot.color === "violet") return "bg-violet/20 border-violet shadow-[0_0_12px_rgba(139,92,246,0.3)]";
-      if (spot.color === "magenta") return "bg-magenta/20 border-magenta shadow-[0_0_12px_rgba(236,72,153,0.3)]";
-      return "bg-cyan/15 border-cyan shadow-[0_0_10px_rgba(6,182,212,0.3)]";
+      if (spot.color === "violet") return "bg-violet/15 border-violet";
+      if (spot.color === "magenta") return "bg-magenta/15 border-magenta";
+      return "bg-cyan/10 border-cyan";
     }
     if (spot.color === "violet") return "bg-violet/5 border-violet/25 hover:border-violet/50 hover:bg-violet/10";
     if (spot.color === "magenta") return "bg-magenta/5 border-magenta/25 hover:border-magenta/50 hover:bg-magenta/10";
@@ -88,7 +88,7 @@ export function BettingPanel({
   };
 
   return (
-    <div className="space-y-1.5">
+    <div className="space-y-2.5">
       {/* Move bets — compact row */}
       <div className={cn(
         "bg-card rounded-lg p-2 sm:p-3 border transition-all",
@@ -97,9 +97,9 @@ export function BettingPanel({
       )}>
         <div className="flex items-center justify-between mb-1.5">
           <span className="text-[10px] sm:text-xs font-bold text-foreground uppercase tracking-wide">move bet</span>
-          <span className="text-xs sm:text-sm text-cyan font-mono font-black bg-cyan/15 px-2 py-0.5 rounded shadow-[0_0_8px_rgba(6,182,212,0.2)]">2.91x</span>
+          <span className="text-sm sm:text-base text-cyan font-mono font-black bg-cyan/10 px-2.5 py-0.5 rounded">2.91x</span>
         </div>
-        <div className="grid grid-cols-4 gap-1.5">
+        <div className="grid grid-cols-4 gap-2">
           {BET_SPOTS.filter((s) => s.category === "move").map((spot) => {
             const amount = getBetAmount(spot.type);
             const isWin = isResults && winningMove === spot.type;
@@ -119,7 +119,7 @@ export function BettingPanel({
                 <AnimatePresence>
                   {amount > 0 && (
                     <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }}
-                      className="absolute -top-1.5 -right-1.5 bg-cyan text-black text-[8px] font-black rounded-full min-w-[22px] h-4 flex items-center justify-center px-0.5 shadow-[0_0_6px_rgba(6,182,212,0.4)]">
+                      className="absolute -top-1.5 -right-1.5 bg-cyan text-black text-[8px] font-black rounded-full min-w-[22px] h-4 flex items-center justify-center px-0.5">
                       ${amount}
                     </motion.div>
                   )}
@@ -138,7 +138,7 @@ export function BettingPanel({
       )}>
         <div className="flex items-center justify-between mb-1.5">
           <span className="text-[10px] sm:text-xs font-bold text-foreground uppercase tracking-wide">player bet</span>
-          <span className="text-xs sm:text-sm text-cyan font-mono font-black bg-cyan/15 px-2 py-0.5 rounded shadow-[0_0_8px_rgba(6,182,212,0.2)]">1.94x</span>
+          <span className="text-sm sm:text-base text-cyan font-mono font-black bg-cyan/10 px-2.5 py-0.5 rounded">1.94x</span>
         </div>
         <div className="grid grid-cols-2 gap-2">
           {BET_SPOTS.filter((s) => s.category === "player").map((spot) => {
@@ -164,8 +164,8 @@ export function BettingPanel({
                   {amount > 0 && (
                     <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }}
                       className={cn("absolute -top-1.5 -right-1.5 text-white text-[8px] font-black rounded-full min-w-[22px] h-4 flex items-center justify-center px-0.5",
-                        spot.color === "violet" ? "bg-violet shadow-[0_0_6px_rgba(139,92,246,0.4)]"
-                          : "bg-magenta shadow-[0_0_6px_rgba(236,72,153,0.4)]")}>
+                        spot.color === "violet" ? "bg-violet"
+                          : "bg-magenta")}>
                       ${amount}
                     </motion.div>
                   )}
@@ -188,8 +188,8 @@ export function BettingPanel({
                 disabled={balance < chip}
                 className={cn("flex-1 py-1.5 sm:py-2 rounded-lg text-[11px] sm:text-xs font-black transition-all border active:scale-95",
                   selectedChip === chip
-                    ? "bg-violet/20 border-violet text-violet shadow-[0_0_10px_rgba(139,92,246,0.3)] scale-[1.05]"
-                    : "bg-secondary/80 border-border text-foreground/70 hover:border-violet/30",
+                    ? "bg-violet/15 border-violet text-violet scale-[1.03]"
+                    : "bg-secondary/80 border-border text-foreground/70 hover:border-foreground/20",
                   balance < chip && "opacity-25 cursor-not-allowed")}>
                 ${chip}
               </button>

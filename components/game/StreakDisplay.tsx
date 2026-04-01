@@ -66,16 +66,16 @@ export function StreakDisplay({ recentResults }: StreakDisplayProps) {
       {streak.count >= 2 && (
         <div
           className={cn(
-            "text-center py-2 px-4 rounded-xl text-sm font-black animate-pulse border-2",
+            "text-center py-1.5 px-4 rounded-lg text-xs font-bold uppercase tracking-wider border",
             streak.player === "bull"
-              ? "bg-violet/15 text-violet border-violet/30 shadow-[0_0_15px_rgba(139,92,246,0.2)]"
-              : "bg-magenta/15 text-magenta border-magenta/30 shadow-[0_0_15px_rgba(236,72,153,0.2)]"
+              ? "bg-violet/10 text-violet border-violet/20"
+              : "bg-magenta/10 text-magenta border-magenta/20"
           )}
         >
-          {streak.player === "bull" ? "BULL" : "BEAR"}: {streak.count} STREAK
+          {streak.player === "bull" ? "BULL" : "BEAR"} {streak.count}-STREAK
           {streak.count >= 5 && " 🔥"}
           {streak.count >= 8 && "🔥"}
-          {streak.count >= 10 && "🔥"}
+          {streak.count >= 10 && " 💀"}
         </div>
       )}
 
