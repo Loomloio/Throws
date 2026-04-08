@@ -1,50 +1,79 @@
 "use client";
 
+import { useState } from "react";
 import { useUserStore } from "@/stores/userStore";
-import { Button } from "@/components/ui/button";
+import { DepositPanel } from "@/components/wallet/DepositPanel";
+import { WithdrawPanel } from "@/components/wallet/WithdrawPanel";
+import { cn } from "@/lib/utils";
 
 export default function WalletPage() {
-  const balance = useUserStore((s) => s.balance);
+  const { userId, balance } = useUserStore();
+  const [activeTab, setActiveTab] = useState<"deposit" | "withdraw">("deposit");
 
   return (
-    <div className="max-w-2xl mx-auto p-4 space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">wallet</h1>
-        <p className="text-sm text-muted-foreground">your money, ser</p>
-      </div>
+    <div className="min-h-[calc(100vh-3.5rem)] bg-background">
+      <div className="max-w-lg mx-auto px-4 py-6 space-y-5">
+        {/* Balance card */}
+        <div className="relative overflow-hidden rounded-2xl border border-white/[0.06] bg-gradient-to-br from-[#14141f] to-[#0e0e16] p-6">
+          <div className="absolute top-0 right-0 w-40 h-40 bg-violet/5 rounded-full blur-3xl -mr-10 -mt-10" />
+          <div className="absolute bottom-0 left-0 w-32 h-32 bg-magenta/5 rounded-full blur-3xl -ml-8 -mb-8" />
+          <div className="relative">
+            <p className="text-xs text-white/40 uppercase tracking-widest font-medium mb-2">
+              Available Balance
+            </p>
+            <p className="text-5xl font-black font-mono tabular-nums text-white tracking-tight">
+              ${balance.toFixed(2)}
+            </p>
+          </div>
+        </div>
 
-      {/* Balance card */}
-      <div className="bg-card border border-border rounded-lg p-6">
-        <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">
-          balance
-        </p>
-        <p className="text-4xl font-bold font-mono tabular-nums">
-          ${balance.toFixed(2)}
-        </p>
-      </div>
+        {userId ? (
+          <>
+            {/* Deposit / Withdraw toggle */}
+            <div className="flex rounded-xl bg-white/[0.03] border border-white/[0.06] p-1">
+              <button
+                onClick={() => setActiveTab("deposit")}
+                className={cn(
+                  "flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all",
+                  activeTab === "deposit"
+                    ? "bg-white/[0.08] text-white shadow-sm"
+                    : "text-white/40 hover:text-white/60"
+                )}
+              >
+                Deposit
+              </button>
+              <button
+                onClick={() => setActiveTab("withdraw")}
+                className={cn(
+                  "flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all",
+                  activeTab === "withdraw"
+                    ? "bg-white/[0.08] text-white shadow-sm"
+                    : "text-white/40 hover:text-white/60"
+                )}
+              >
+                Withdraw
+              </button>
+            </div>
 
-      {/* Actions */}
-      <div className="grid grid-cols-2 gap-4">
-        <Button
-          size="lg"
-          className="bg-green hover:bg-green/80 text-white h-14"
-        >
-          deposit
-        </Button>
-        <Button
-          size="lg"
-          variant="outline"
-          className="border-border h-14"
-        >
-          withdraw
-        </Button>
-      </div>
+            {/* Panel */}
+            {activeTab === "deposit" ? <DepositPanel /> : <WithdrawPanel />}
+          </>
+        ) : (
+          <div className="rounded-2xl border border-white/[0.06] bg-[#12121a] p-8 text-center">
+            <p className="text-white/40 text-sm">
+              Sign in to manage your wallet
+            </p>
+          </div>
+        )}
 
-      {/* Transaction history */}
-      <div>
-        <h2 className="text-sm font-medium mb-3">transactions</h2>
-        <div className="bg-card border border-border rounded-lg p-8 text-center">
-          <p className="text-muted-foreground text-sm">no transactions yet</p>
+        {/* Transactions */}
+        <div>
+          <h2 className="text-xs text-white/40 uppercase tracking-widest font-medium mb-3">
+            Recent Transactions
+          </h2>
+          <div className="rounded-2xl border border-white/[0.06] bg-[#12121a] p-8 text-center">
+            <p className="text-white/30 text-xs">No transactions yet</p>
+          </div>
         </div>
       </div>
     </div>

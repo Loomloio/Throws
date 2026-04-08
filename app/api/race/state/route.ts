@@ -1,0 +1,185 @@
+import { NextResponse } from "next/server";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { getCurrentRace, tick } from "@/lib/racing/engine";
+import { simulateRace } from "@/lib/racing/simulation";
+import { RACE_TIMING } from "@/lib/racing/constants";
+import type { RacePhase, RaceState, GroundCondition, RaceDistance } from "@/lib/racing/constants";
+
+export async function GET() {
+  const supabase = createAdminClient();
+
+  try {
+    // Advance engine if needed
+    try { await tick(); } catch { /* non-fatal */ }
+
+    const current = await getCurrentRace();
+
+    if (!current) {
+      return NextResponse.json({ waiting: true, message: "No active race" });
+    }
+
+    // Get entries with horse data
+    const { data: entries } = await supabase
+      .from("race_entries")
+      .select("*, horses(*)")
+      .eq("race_id", current.id)
+      .order("gate_position", { ascending: true });
+
+    // Get last settled race
+    let lastRaceData = null;
+    const { data: lastSettled } = await supabase
+      .from("races")
+      .select("*")
+      .eq("status", "settled")
+      .order("race_number", { ascending: false })
+      .limit(1)
+      .single();
+
+    if (lastSettled && lastSettled.id !== current.id) {
+      const { data: lastEntries } = await supabase
+        .from("race_entries")
+        .select("*, horses(name, color)")
+        .eq("race_id", lastSettled.id)
+        .order("finish_position", { ascending: true });
+
+      lastRaceData = {
+        id: lastSettled.id,
+        raceNumber: lastSettled.race_number,
+        entries: lastEntries || [],
+        winningHorseId: lastSettled.winning_horse_id,
+        commentary: lastSettled.commentary,
+        serverSeed: lastSettled.server_seed,
+      };
+    }
+
+    // Recent winners
+    const { data: recentRaces } = await supabase
+      .from("races")
+      .select("race_number, winning_horse_id, race_entries!inner(horse_id, finish_position, horses(name, color))")
+      .eq("status", "settled")
+      .order("race_number", { ascending: false })
+      .limit(10);
+
+    const recentWinners = (recentRaces || [])
+      .filter((r) => r.winning_horse_id)
+      .map((r) => {
+        const winnerEntry = (r.race_entries as unknown as { horse_id: number; finish_position: number; horses: { name: string; color: string } }[])
+          ?.find((e) => e.finish_position === 1);
+        return {
+          raceNumber: r.race_number,
+          horseName: winnerEntry?.horses?.name || "Unknown",
+          horseColor: winnerEntry?.horses?.color || "#fff",
+        };
+      });
+
+    // Calculate phase + time remaining
+    const now = Date.now();
+    const bettingClosesAt = new Date(current.betting_closes_at).getTime();
+    const closedEndsAt = bettingClosesAt + RACE_TIMING.CLOSED_DURATION * 1000;
+    const raceEndsAt = closedEndsAt + RACE_TIMING.RACE_DURATION * 1000;
+    const resultsEndAt = raceEndsAt + RACE_TIMING.RESULTS_DURATION * 1000;
+
+    let phase: RacePhase;
+    let timeRemaining: number;
+
+    if (current.status === "betting") {
+      phase = "betting";
+      timeRemaining = Math.max(0, Math.ceil((bettingClosesAt - now) / 1000));
+    } else if (current.status === "closed") {
+      phase = "closed";
+      timeRemaining = Math.max(0, Math.ceil((closedEndsAt - now) / 1000));
+    } else if (current.status === "racing") {
+      phase = "racing";
+      timeRemaining = Math.max(0, Math.ceil((raceEndsAt - now) / 1000));
+    } else {
+      phase = "results";
+      timeRemaining = Math.max(0, Math.ceil((resultsEndAt - now) / 1000));
+    }
+
+    // Format entries
+    const formattedEntries = (entries || []).map((e) => {
+      const h = e.horses as unknown as Record<string, unknown>;
+      return {
+        id: e.id,
+        horseId: e.horse_id,
+        horse: {
+          id: h.id as number,
+          name: h.name as string,
+          slug: h.slug as string,
+          color: h.color as string,
+          speed: h.speed as number,
+          stamina: h.stamina as number,
+          form: h.form as number,
+          consistency: h.consistency as number,
+          groundPreference: h.ground_preference as GroundCondition,
+          careerRaces: h.career_races as number,
+          careerWins: h.career_wins as number,
+          careerPlaces: h.career_places as number,
+          careerShows: h.career_shows as number,
+          last5Results: (h.last_5_results as { raceNumber: number; position: number }[]) || [],
+          distanceRecord: (h.distance_record as Record<string, { starts: number; wins: number; places: number }>) || {},
+          groundRecord: (h.ground_record as Record<string, { starts: number; wins: number; places: number }>) || {},
+          gateRecord: (h.gate_record as Record<string, { starts: number; wins: number }>) || {},
+          speedRating: (h.speed_rating as number) || 70,
+          avgFinish: (h.avg_finish as number) || 4.5,
+        },
+        gatePosition: e.gate_position,
+        openingOdds: parseFloat(e.opening_odds),
+        currentOdds: parseFloat(e.current_odds),
+        placeOdds: e.place_odds ? parseFloat(e.place_odds) : parseFloat(e.current_odds) * 0.5,
+        showOdds: e.show_odds ? parseFloat(e.show_odds) : parseFloat(e.current_odds) * 0.3,
+        trueProbability: parseFloat(e.true_probability),
+        powerScore: e.power_score ? parseFloat(e.power_score) : undefined,
+        finishPosition: e.finish_position || undefined,
+        margin: e.margin ? parseFloat(e.margin) : undefined,
+      };
+    });
+
+    const state: RaceState = {
+      currentRace: {
+        id: current.id,
+        raceNumber: current.race_number,
+        status: current.status,
+        distance: current.distance as RaceDistance,
+        ground: current.ground as GroundCondition,
+        serverSeedHash: current.server_seed_hash,
+        bettingOpensAt: current.betting_opens_at,
+        bettingClosesAt: current.betting_closes_at,
+        betCount: current.bet_count,
+        totalVolume: parseFloat(current.total_bet_amount),
+        entries: formattedEntries,
+        winningHorseId: current.winning_horse_id,
+        commentary: current.commentary,
+        // Include animation checkpoints during racing/results
+        checkpoints: (current.status === "racing" || current.status === "settled")
+          ? (() => {
+              try {
+                const simHorses = formattedEntries.map((e) => ({
+                  id: e.horseId,
+                  speed: e.horse.speed,
+                  stamina: e.horse.stamina,
+                  form: e.horse.form,
+                  consistency: e.horse.consistency,
+                  groundPreference: e.horse.groundPreference,
+                }));
+                const simResult = simulateRace(
+                  current.server_seed, current.client_seed, current.nonce,
+                  simHorses, current.distance as RaceDistance, current.ground as GroundCondition
+                );
+                return simResult.checkpoints;
+              } catch { return undefined; }
+            })()
+          : undefined,
+      },
+      lastRace: lastRaceData,
+      recentWinners,
+      timeRemaining,
+      phase,
+    };
+
+    return NextResponse.json(state);
+  } catch (error) {
+    console.error("Race state error:", error);
+    return NextResponse.json({ error: "Failed to get race state" }, { status: 500 });
+  }
+}

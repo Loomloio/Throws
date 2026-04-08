@@ -45,10 +45,18 @@ function WalletIcon({ className }: { className?: string }) {
   );
 }
 
+function RacingIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
+    </svg>
+  );
+}
+
 const navItems = [
-  { href: "/arena", label: "arena", Icon: ArenaIcon },
+  { href: "/arena", label: "rps", Icon: ArenaIcon },
+  { href: "/racing", label: "racing", Icon: RacingIcon },
   { href: "/history", label: "history", Icon: HistoryIcon },
-  { href: "/leaderboard", label: "ranks", Icon: RanksIcon },
   { href: "/wallet", label: "wallet", Icon: WalletIcon },
 ];
 

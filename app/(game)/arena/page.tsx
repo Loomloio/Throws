@@ -10,6 +10,7 @@ import { BettingPanel } from "@/components/game/BettingPanel";
 import { StreakDisplay } from "@/components/game/StreakDisplay";
 import { BigWinCelebration } from "@/components/game/BigWinCelebration";
 import { ShareButton } from "@/components/game/ShareButton";
+import { WinCard } from "@/components/game/WinCard";
 import { RoundWinnersPlaceholder } from "@/components/game/RoundWinners";
 import { DevToolbar } from "@/components/game/DevToolbar";
 import { WinnersBanner } from "@/components/game/WinnersBanner";
@@ -48,6 +49,11 @@ export default function ArenaPage() {
   const [bigWin, setBigWin] = useState<{
     amount: number;
     username?: string;
+  } | null>(null);
+  const [shareCard, setShareCard] = useState<{
+    amount: number;
+    betType: string;
+    multiplier: number;
   } | null>(null);
 
   const prevPhaseRef = useRef(phase);
@@ -160,7 +166,7 @@ export default function ArenaPage() {
     }
   }, [userId, username]);
 
-  // Save last bets for re-bet, then clear when new round starts
+  // Save last bets for re-bet when they settle
   useEffect(() => {
     if (phase === "betting") {
       const bets = useUserStore.getState().activeBets;
@@ -171,11 +177,13 @@ export default function ArenaPage() {
           amount: b.amount,
         }));
       }
+    }
+    // Clear settled bets when countdown starts — they've had the whole betting phase to see them
+    if (phase === "countdown" || phase === "battle") {
+      const bets = useUserStore.getState().activeBets;
+      const settledBets = bets.filter((b) => b.status !== "pending");
       if (settledBets.length > 0) {
-        const timeout = setTimeout(() => {
-          useUserStore.getState().clearActiveBets();
-        }, 3000);
-        return () => clearTimeout(timeout);
+        useUserStore.getState().clearActiveBets();
       }
     }
   }, [phase]);
@@ -194,6 +202,14 @@ export default function ArenaPage() {
 
       // Sound
       play("bet_placed");
+
+      // Clear old settled bets when placing a new bet
+      const oldSettled = store.activeBets.filter((b) => b.status !== "pending");
+      if (oldSettled.length > 0) {
+        const pending = store.activeBets.filter((b) => b.status === "pending");
+        store.clearActiveBets();
+        pending.forEach((b) => store.addActiveBet(b));
+      }
 
       // 1. INSTANT UI update
       store.setBalance(store.balance - chipAmount);
@@ -378,8 +394,8 @@ export default function ArenaPage() {
             roundNumber={currentRound?.roundNumber}
           />
 
-          {/* Results feedback — shows inside the battle area during results */}
-          {phase === "results" && (
+          {/* Results feedback — shows during results AND carries into betting phase until user bets or countdown starts */}
+          {(phase === "results" || (phase === "betting" && (wonBets.length > 0 || lostBets.length > 0 || pushBets.length > 0))) && (
             <div className="space-y-1 px-1 mt-1">
               <WinnersBanner visible={true}
                 winnerCount={roundWinners?.winnerCount || 0}
@@ -391,8 +407,11 @@ export default function ArenaPage() {
                     <span className="text-green font-bold text-sm">+${(bet.payout || 0).toFixed(2)}</span>
                     <span className="text-[10px] text-muted-foreground ml-1.5">{betLabel(bet.betType)} {bet.multiplier}x</span>
                   </div>
-                  <ShareButton winAmount={bet.payout || 0} betType={betLabel(bet.betType)}
-                    roundNumber={currentRound?.roundNumber || 0} />
+                  <ShareButton onShare={() => setShareCard({
+                    amount: bet.payout || 0,
+                    betType: bet.betType,
+                    multiplier: bet.multiplier,
+                  })} />
                 </div>
               ))}
               {lostBets.map((bet) => (
@@ -486,6 +505,22 @@ export default function ArenaPage() {
         username={bigWin?.username}
         onComplete={() => setBigWin(null)}
       />
+
+      {/* Win card modal */}
+      {shareCard && currentRound && (
+        <WinCard
+          amount={shareCard.amount}
+          betType={shareCard.betType}
+          multiplier={shareCard.multiplier}
+          roundNumber={currentRound.roundNumber}
+          result={currentRound.result || "violet_win"}
+          winningMove={currentRound.winningMove || null}
+          violetMove={(currentRound.violetMove || "rock") as import("@/lib/game/constants").Move}
+          magentaMove={(currentRound.magentaMove || "scissors") as import("@/lib/game/constants").Move}
+          username={username || "anon"}
+          onClose={() => setShareCard(null)}
+        />
+      )}
 
       {/* Dev toolbar — remove before production */}
       <DevToolbar />

@@ -152,3 +152,9 @@
 .bg-card, .bg-secondary {
   box-shadow: none;
 }
+
+/* Infinite scroll ticker for landing page */
+@keyframes scroll {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}

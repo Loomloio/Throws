@@ -11,9 +11,9 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Throws.gg — rock paper scissors, but degen",
+  title: "Throws.gg — virtual horse racing, real payouts",
   description:
-    "CPU vs CPU rock paper scissors. Watch. Bet. Profit. Provably fair, crypto-native.",
+    "16 AI horses. Fixed odds. Races every 3 minutes. Provably fair, crypto-native. They race. You bet. You profit.",
 };
 
 export default function RootLayout({

@@ -19,7 +19,7 @@ function Logo() {
   return (
     <Link href="/" className="flex items-center gap-2">
       <Image
-        src="/logo.png"
+        src="/logo-horse.png"
         alt="throws.gg"
         width={120}
         height={32}
